@@ -1,0 +1,124 @@
+
+# 12. Quais são os conceitos ensinados por um determinado mestre?
+SELECT ?conceito WHERE {
+  ?mestre a :Mestre .
+  ?mestre :nome "Aristóteles" .
+  ?mestre :ensina ?disciplina .
+  ?conceito :temAplicaçãoEm ?disciplina .
+}
+
+# 13. Que obras explicam o conceito de "Relatividade"?
+SELECT DISTINCT ?obra WHERE {
+  ?obraInd rdf:type :Obra .
+  ?obraInd :explica ?conceito .
+  ?conceito :nome "Relatividade" .
+  ?obraInd :titulo ?obra .
+}
+
+# 14. Em que disciplinas se estudam "Ciências Sociais"?
+SELECT DISTINCT ?disciplina WHERE {
+  ?discInd rdf:type :Disciplina .
+  ?discInd :pertenceA ?tipo .
+  ?tipo :nome "Ciências Sociais" .
+  ?discInd :nome ?disciplina .
+}
+
+# 15. Qual é a aplicação prática dos conhecimentos em "Lógica Formal"?
+SELECT DISTINCT ?aplicacao WHERE {
+  ?conceito rdf:type :Conceito .
+  ?conceito :nome "Lógica Formal" .
+  ?conceito :temAplicaçãoEm ?aplic .
+  ?aplic :nome ?aplicacao .
+}
+
+# 16. Quais disciplinas pertencem ao tipo de conhecimento "Ciências Exatas"?
+SELECT DISTINCT ?disciplina WHERE {
+  ?discInd rdf:type :Disciplina .
+  ?discInd :pertenceA ?tipo .
+  ?tipo :nome "Ciências Exatas" .
+  ?discInd :nome ?disciplina .
+}
+
+# 17. Que mestres ensinaram no século XIX?
+SELECT DISTINCT ?nomeMestre WHERE {
+  ?m rdf:type :Mestre ;
+     :temPeriodoHistorico ?ph ;
+     :nome ?nomeMestre .
+  ?ph :nome "Século XIX" .
+}
+
+# 18. Que aprendizes estudam "Programação"?
+
+SELECT DISTINCT ?nomeAprendiz WHERE {
+  ?conceito rdf:type :Conceito ;
+            :nome "Programação" ;
+            :éEstudadoEm ?disciplina .
+
+  ?aprendiz rdf:type :Aprendiz ;
+            :aprende ?disciplina ;
+            :nome ?nomeAprendiz .
+}
+
+# 19. Qual a distribuição de aprendizes por disciplina? (Resultado será uma lista de pares: Disciplina,
+número de alunos)
+SELECT ?nomeDisciplina (COUNT(?aprendiz) AS ?numAprendizes) WHERE {
+  ?aprendiz rdf:type :Aprendiz ;
+            :aprende ?disciplina .
+
+  ?disciplina :nome ?nomeDisciplina .
+}
+GROUP BY ?nomeDisciplina
+
+# 20. Qual a distribuição de conceitos por período histórico? (Resultado será uma lista de pares:
+Período, número de conceitos)
+SELECT ?nomePeriodo (COUNT(?conceito) AS ?numConceitos) WHERE {
+  ?conceito rdf:type :Conceito ;
+            :surgeEm ?periodo .
+
+  ?periodo :nome ?nomePeriodo .
+}
+GROUP BY ?nomePeriodo
+
+# 21. Quais os títulos das obras associadas a cada conceito? (Resultado será uma lista de pares:
+Conceito, Lista de títulos de obras)
+SELECT ?nomeConceito (GROUP_CONCAT(DISTINCT ?tituloObra; separator=", ") AS ?obras) WHERE {
+  ?obra rdf:type :Obra ;
+        :explica ?conceito ;
+        :titulo ?tituloObra .
+
+  ?conceito :nome ?nomeConceito .
+}
+GROUP BY ?nomeConceito
+
+# 22. Quais os aprendizes que frequentam cada uma das disciplinas? (Resultado será uma lista de
+pares: Disciplina, Lista dos nomes dos aprendizes que frequentam a disciplina)
+SELECT ?nomeDisciplina (GROUP_CONCAT(DISTINCT ?nomeAprendiz; separator=", ") AS ?aprendizes) WHERE {
+  ?aprendiz rdf:type :Aprendiz ;
+            :nome ?nomeAprendiz ;
+            :aprende ?disciplina .
+
+  ?disciplina :nome ?nomeDisciplina .
+}
+GROUP BY ?nomeDisciplina
+
+# 23. Qual a distribuição de aprendizes por escalões etários? (Resultado será uma lista de pares:
+Escalão etário, número aprendizes nesse escalão); Considera os seguintes escalões: [17, 34], [35,
+44], [45, 54], [55, 64], [65, 74], [75, 100].
+SELECT ?escalao (COUNT(?aprendiz) AS ?numAprendizes) WHERE {
+  ?aprendiz rdf:type :Aprendiz ;
+            :idade ?idade .
+
+  BIND(xsd:integer(?idade) AS ?idadeInt)
+
+  BIND(
+    IF(?idadeInt >= 17 && ?idadeInt <= 34, "[17-34]",
+    IF(?idadeInt >= 35 && ?idadeInt <= 44, "[35-44]",
+    IF(?idadeInt >= 45 && ?idadeInt <= 54, "[45-54]",
+    IF(?idadeInt >= 55 && ?idadeInt <= 64, "[55-64]",
+    IF(?idadeInt >= 65 && ?idadeInt <= 74, "[65-74]",
+                            "[75-100]"))))) AS ?escalao)
+}
+GROUP BY ?escalao
+ORDER BY ?escalao
+
+
